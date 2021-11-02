@@ -55,22 +55,6 @@ module.exports = require("os");
 
 "use strict";
 
-/*
- * This file is part of the "Body Message Checker" Action for Github.
- *
- * Copyright (C) 2019 by Gilbertsoft LLC (gilbertsoft.org)
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * For the full license information, please read the LICENSE file that
- * was distributed with this source code.
- */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
@@ -105,34 +89,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const core = __importStar(__webpack_require__(470));
 const inputHelper = __importStar(__webpack_require__(821));
-const commitMessageChecker = __importStar(__webpack_require__(413));
+const infoChecker = __importStar(__webpack_require__(413));
 /**
  * Main function
  */
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const bodyString = core.getInput("body");
         try {
-            const onePassAllPass = core.getInput("one_pass_all_pass");
-            const bodyString = core.getInput("body");
-            const checkerArguments = inputHelper.getInputs();
+            const infoString = core.getInput("info");
+            const checkerArgumentsCommmit = inputHelper.getCommitInputs();
+            const checkerArgumentsBody = inputHelper.getBodyInputs();
             const preErrorMsg = core.getInput("pre_error");
             const postErrorMsg = core.getInput("post_error");
             const failed = [];
 
         
-            if(bodyString !== "") {
-                const bodyJason = JSON.parse(bodyString);
-                for (const {body} of bodyJason) {
-                  inputHelper.checkArgs(checkerArguments)
-                  let errMsg = commitMessageChecker.checkBodyMessages(checkerArguments, body)
-                  // github regex has a problem with "not", so here we do the opposite check from commits.
-                  if (!errMsg) {
+            if(infoString !== "") {
+                const infoJason = JSON.parse(infoString);
+                const bot = 'snyk-bot';
+                for (const {commit, body, author} of infoJason) {
+                    if( bot === author)
+                        break;
+                    inputHelper.checkArgs(checkerArgumentsCommmit)
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit)
+                    if (errMsg) {
                     failed.push({message: errMsg})
-                  }
+                    }
+
+                    inputHelper.checkArgs(checkerArgumentsBody)
+                    errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body)
+                    // github regex has a problem with "not", so here we do the opposite check from commits.
+                    if (!errMsg) {
+                    failed.push({message: errMsg})
+                    }
                 }
             
-                if (onePassAllPass === "true" && bodyJason.length > failed.length) {
+                if (infoJason.length > failed.length) {
                   return;
                 }
             
@@ -143,8 +135,10 @@ function run() {
               }
         }
         catch (error) {
-            core.error(error.message);           
-        }
+            if (error instanceof Error) {
+              core.error(error.message);
+            }
+          }
     });
 }
 /**
@@ -160,31 +154,15 @@ run();
 
 "use strict";
 
-/*
- * This file is part of the "Body Message Checker" Action for Github.
- *
- * Copyright (C) 2019 by Gilbertsoft LLC (gilbertsoft.org)
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * For the full license information, please read the LICENSE file that
- * was distributed with this source code.
- */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkMessage = exports.checkBodyMessages = void 0;
+exports.checkMessage = exports.checkInfoMessages = void 0;
 /**
  * Checks commit messages given by args.
  *
  * @param     args messages, pattern and error message to process.
  * @returns   void
  */
-function checkBodyMessages(args, message) {
+function checkInfoMessages(args, message) {
     if (checkMessage(message, args.pattern, args.flags)) {
         return "";
     }
@@ -192,7 +170,7 @@ function checkBodyMessages(args, message) {
         return args.error;
     }
 }
-exports.checkBodyMessages = checkBodyMessages;
+exports.checkInfoMessages = checkInfoMessages;
 /**
  * Checks the message against the regex pattern.
  *
@@ -549,22 +527,7 @@ module.exports = require("path");
 
 "use strict";
 
-/*
- * This file is part of the "Body Message Checker" Action for Github.
- *
- * Copyright (C) 2019 by Gilbertsoft LLC (gilbertsoft.org)
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * For the full license information, please read the LICENSE file that
- * was distributed with this source code.
- */
+
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });

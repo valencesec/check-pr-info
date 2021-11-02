@@ -20,21 +20,36 @@
  */
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { ICheckerArguments } from "./body-message-checker";
+import { ICheckerArguments } from "./info-checker";
 
 /**
  * Gets the inputs set by the user and the messages of the event.
  *
  * @returns   ICheckerArguments
  */
-export function getInputs(): ICheckerArguments {
+export function getCommitInputs(): ICheckerArguments {
   const result = ({} as unknown) as ICheckerArguments;
 
   // Get pattern
-  result.pattern = core.getInput("pattern", { required: true });
+  result.pattern = core.getInput("commit_pattern", { required: true });
 
   // Get flags
-  result.flags = core.getInput("flags");
+  result.flags = core.getInput("commit_flags");
+
+  // Get error message
+  result.error = core.getInput("error", { required: true });
+
+  return result;
+}
+
+export function getBodyInputs(): ICheckerArguments {
+  const result = ({} as unknown) as ICheckerArguments;
+
+  // Get pattern
+  result.pattern = core.getInput("body_pattern", { required: true });
+
+  // Get flags
+  result.flags = core.getInput("body_flags");
 
   // Get error message
   result.error = core.getInput("error", { required: true });

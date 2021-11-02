@@ -1,18 +1,6 @@
-# Commit Messages (in Pull Request) Checker with regex
+# Info (in Pull Request) Checker with regex
 
-![Version](https://img.shields.io/github/v/release/gsactions/commit-message-checker?style=flat-square)
-![Test](https://github.com/gsactions/commit-message-checker/workflows/build-test/badge.svg)
-
-A GitHub action that checks that commit messages match a regex pattern. The
-action is able to act on pull request and push events and check the pull
-request title and body or the commit message of the commits of a push.
-
-On pull requests the title and body are concatenated delimited by two line
-breaks.
-
-Designed to be very flexible in usage: you can split checks into various
-workflows, using action types on pull request to listen on, define branches
-for pushes etc. etc.
+A GitHub action that checks that last commit messages match a regex pattern.
 
 ## Configuration
 
@@ -45,11 +33,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check body
-        uses: yuvalza/commit-message-checker@master
+        uses: tagenasec/negative-body-message-checker@master
         with:
           body: ${{ steps.get-pr-commits.outputs.body }}
           pattern: '^((Please describe your change).*)$'
-          error: ${{ steps.get-pr-commits.outputs.body }}
+          error: 'Please describe your change in the PR's body.'
           flags: gm
 
 ```
@@ -59,7 +47,7 @@ jobs:
 ### Quick Start
 
 ```sh
-git clone https://github.com/gsactions/commit-message-checker.git
+git clone https://github.com/tagenasec/negative-body-message-checker.git
 npm install
 npm run build
 ```

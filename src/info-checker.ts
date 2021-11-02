@@ -36,7 +36,7 @@ export interface ICheckerArguments {
  * @param     args messages, pattern and error message to process.
  * @returns   void
  */
-export function checkBodyMessages(
+export function checkInfoMessages(
   args: ICheckerArguments,
   message: string
 ): string {
