@@ -1,5 +1,49 @@
 # Changelog
 
+### `v10.0.0`
+
+Breaking changes:
+
+Setting `NSAllowsArbitraryLoads` as false for security reasons within terminal-notifier. Meaning non-https images/loads for terminal-notifier will no longer work. See [#362](https://github.com/mikaelbr/node-notifier/pull/362)
+
+#### Fixes
+
+- fix: options.customPath doesn't work for windows toaster. See [#373](https://github.com/mikaelbr/node-notifier/pull/373)
+
+### `v9.0.1`
+
+- Fixes potential security issue with non-escaping input parameters for notify-send.
+
+### `v9.0.0`
+
+Breaking changes:
+
+- Corrects mapping on snoretoast activate event. See [#347](https://github.com/mikaelbr/node-notifier/pull/347).
+
+#### Patches
+
+- Fix named pipe in WSL. See [#342](https://github.com/mikaelbr/node-notifier/pull/342).
+- fixes possible injection issue for notify-send
+
+### `v8.0.2`
+
+- Fixes potential security issue with non-escaping input parameters for notify-send.
+
+### `v8.0.0`
+
+Breaking changes:
+
+- Expire time for notify-send is made to match macOS and Windows with default time of 10 seconds. The API is changed to take seconds as input and converting it to milliseconds before passing it on to notify-send. See [#341](https://github.com/mikaelbr/node-notifier/pull/341).
+
+### `v7.0.2`
+
+- Updates dependencies
+- Fixes issue with haning Windows notifications when disabled ([#335](https://github.com/mikaelbr/node-notifier/pull/335))
+
+### `v7.0.1`
+
+- Fixes import of uuid, removes deprecation warnings
+
 ### `v7.0.0`
 
 #### Features
@@ -22,6 +66,14 @@
 #### Other
 
 - Update to latest version of dependencies.
+
+### `v5.4.4`
+
+- Fixes potential security issue with non-escaping input parameters for notify-send.
+
+### `v5.4.3`
+
+- Fixes potential security issue with non-escaping input parameters for notify-send.
 
 ### `v5.4.3`
 
@@ -238,7 +290,7 @@ notifier.notify();
 
 ```js
 var notifier = require('node-notifier');
-notifier.notify({ wait: true }, function(err, response) {
+notifier.notify({ wait: true }, function (err, response) {
   // response is response after user have interacted
   // with the notification or the notification has timed out.
 });
@@ -249,7 +301,7 @@ notifier.notify({ wait: true }, function(err, response) {
 
 ```js
 var notifier = require('node-notifier');
-notifier.on('click', function(notificationObject, options) {
+notifier.on('click', function (notificationObject, options) {
   // options.someArbitraryData === 'foo'
 });
 notifier.notify({ wait: true, someArbitraryData: 'foo' });

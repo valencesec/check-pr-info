@@ -1,20 +1,21 @@
 /**
  * Wrapper for the toaster (https://github.com/nels-o/toaster)
  */
-var path = require('path');
-var notifier = path.resolve(__dirname, '../vendor/snoreToast/snoretoast');
-var utils = require('../lib/utils');
-var Balloon = require('./balloon');
-var os = require('os');
+const path = require('path');
+const notifier = path.resolve(__dirname, '../vendor/snoreToast/snoretoast');
+const utils = require('../lib/utils');
+const Balloon = require('./balloon');
+const os = require('os');
 const { v4: uuid } = require('uuid');
 
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
 
-var fallback;
+let fallback;
 
 const PIPE_NAME = 'notifierPipe';
 const PIPE_PATH_PREFIX = '\\\\.\\pipe\\';
+const PIPE_PATH_PREFIX_WSL = '/tmp/';
 
 module.exports = WindowsToaster;
 
@@ -46,15 +47,18 @@ function parseResult(data) {
 }
 
 function getPipeName() {
-  return `${PIPE_PATH_PREFIX}${PIPE_NAME}-${uuid()}`;
+  const pathPrefix = utils.isWSL() ? PIPE_PATH_PREFIX_WSL : PIPE_PATH_PREFIX;
+  return `${pathPrefix}${PIPE_NAME}-${uuid()}`;
 }
 
 function notifyRaw(options, callback) {
   options = utils.clone(options || {});
   callback = callback || noop;
-  var is64Bit = os.arch() === 'x64';
-  var resultBuffer;
-  const namedPipe = getPipeName();
+  const is64Bit = os.arch() === 'x64';
+  let resultBuffer;
+  const server = {
+    namedPipe: getPipeName()
+  };
 
   if (typeof options === 'string') {
     options = { title: 'node-notifier', message: options };
@@ -67,7 +71,7 @@ function notifyRaw(options, callback) {
     );
   }
 
-  var snoreToastResultParser = (err, callback) => {
+  const snoreToastResultParser = (err, callback) => {
     /* Possible exit statuses from SnoreToast, we only want to include err if it's -1 code
     Exit Status     :  Exit Code
     Failed          : -1
@@ -94,16 +98,19 @@ function notifyRaw(options, callback) {
       callback(err, result);
     }
     callback(null, result);
+
+    // https://github.com/mikaelbr/node-notifier/issues/334
+    // Due to an issue with snoretoast not using stdio and pipe
+    // when notifications are disabled, make sure named pipe server
+    // is closed before exiting.
+    server.instance && server.instance.close();
   };
 
-  var actionJackedCallback = err =>
+  const actionJackedCallback = (err) =>
     snoreToastResultParser(
       err,
-      utils.actionJackerDecorator(
-        this,
-        options,
-        callback,
-        data => data || false
+      utils.actionJackerDecorator(this, options, callback, (data) =>
+        data === 'activate' ? 'click' : data || false
       )
     );
 
@@ -122,21 +129,23 @@ function notifyRaw(options, callback) {
   }
 
   // Add pipeName option, to get the output
-  utils.createNamedPipe(namedPipe).then(out => {
+  utils.createNamedPipe(server).then((out) => {
     resultBuffer = out;
-    options.pipeName = namedPipe;
+    options.pipeName = server.namedPipe;
+
+    const localNotifier = options.customPath ||
+      (notifier + '-x' + (is64Bit ? '64' : '86') + '.exe');
 
     options = utils.mapToWin8(options);
-    var argsList = utils.constructArgumentList(options, {
+    const argsList = utils.constructArgumentList(options, {
       explicitTrue: true,
       wrapper: '',
       keepNewlines: true,
       noEscape: true
     });
 
-    var notifierWithArch = notifier + '-x' + (is64Bit ? '64' : '86') + '.exe';
     utils.fileCommand(
-      this.options.customPath || notifierWithArch,
+      localNotifier,
       argsList,
       actionJackedCallback
     );
@@ -145,7 +154,7 @@ function notifyRaw(options, callback) {
 }
 
 Object.defineProperty(WindowsToaster.prototype, 'notify', {
-  get: function() {
+  get: function () {
     if (!this._notify) this._notify = notifyRaw.bind(this);
     return this._notify;
   }
