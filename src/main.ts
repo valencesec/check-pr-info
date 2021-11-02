@@ -15,25 +15,21 @@ async function run(): Promise<void> {
     if(infoString !== "") {
         const infoJason = JSON.parse(infoString);
         const bot = 'snyk-bot';
-        for (const {commit, body, author} of infoJason) {
-            if( bot === author)
-                break;
+        for (const {commit, body} of infoJason) {
+            if( bot === commit.commit.committer.name)
+              break;
             inputHelper.checkArgs(checkerArgumentsCommmit)
-            let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit)
+            let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.commit.message)
             if (errMsg) {
-            failed.push({message: errMsg})
+                failed.push({message: errMsg})
             }
 
             inputHelper.checkArgs(checkerArgumentsBody)
             errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body)
             // github regex has a problem with "not", so here we do the opposite check from commits.
             if (!errMsg) {
-            failed.push({message: errMsg})
+                failed.push({message: checkerArgumentsBody.error})
             }
-        }
-    
-        if (infoJason.length > failed.length) {
-          return;
         }
     
         if (failed.length > 0) {

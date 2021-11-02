@@ -107,25 +107,21 @@ function run() {
             if(infoString !== "") {
                 const infoJason = JSON.parse(infoString);
                 const bot = 'snyk-bot';
-                for (const {commit, body, author} of infoJason) {
-                    if( bot === author)
+                for (const {commit, body} of infoJason) {
+                    if( bot === commit.commit.committer.name)
                         break;
                     inputHelper.checkArgs(checkerArgumentsCommmit)
-                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit)
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.commit.message)
                     if (errMsg) {
-                    failed.push({message: errMsg})
+                        failed.push({message: checkerArgumentsBody.error})
                     }
 
                     inputHelper.checkArgs(checkerArgumentsBody)
                     errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body)
                     // github regex has a problem with "not", so here we do the opposite check from commits.
                     if (!errMsg) {
-                    failed.push({message: errMsg})
+                        failed.push({message: "Body is still in default template"})
                     }
-                }
-            
-                if (infoJason.length > failed.length) {
-                  return;
                 }
             
                 if (failed.length > 0) {
@@ -548,7 +544,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.genOutput = exports.checkArgs = exports.getInputs = void 0;
+exports.genOutput = exports.checkArgs = exports.getCommitInputs = exports.getBodyInputs= void 0;
 /**
  * Imports
  */
@@ -558,17 +554,30 @@ const core = __importStar(__webpack_require__(470));
  *
  * @returns   ICheckerArguments
  */
-function getInputs() {
+function getCommitInputs() {
     const result = {};
     // Get pattern
-    result.pattern = core.getInput("pattern", { required: true });
+    result.pattern = core.getInput("commit_pattern", { required: true });
     // Get flags
-    result.flags = core.getInput("flags");
+    result.flags = core.getInput("commit_flags");
     // Get error message
     result.error = core.getInput("error", { required: true });
     return result;
 }
-exports.getInputs = getInputs;
+
+function getBodyInputs() {
+    const result = {};
+    // Get pattern
+    result.pattern = core.getInput("body_pattern", { required: true });
+    // Get flags
+    result.flags = core.getInput("body_flags");
+    // Get error message
+    result.error = core.getInput("error", { required: true });
+    return result;
+}
+exports.getCommitInputs = getCommitInputs;
+exports.getBodyInputs = getBodyInputs;
+
 function checkArgs(args) {
     // Check arguments
     if (args.pattern.length === 0) {

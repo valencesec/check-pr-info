@@ -1,6 +1,6 @@
 # Info (in Pull Request) Checker with regex
 
-A GitHub action that checks that last commit messages match a regex pattern.
+A GitHub action that checks that last commit message and pr body match a regex pattern, it also checks if the author is a bot.
 
 ## Configuration
 
@@ -12,7 +12,7 @@ More information about `pattern` and `flags` can be found in the
 ### Example Workflow
 
 ```yml
-name: 'Commit Message Check'
+name: 'Pull Request Info Check'
 on:
   pull_request:
     types:
@@ -22,23 +22,25 @@ on:
       - synchronize
 
 jobs:
-  check-commit-message:
-    name: Check Commit Message
+  check-info:
+    name: Check Info
     runs-on: ubuntu-latest
     steps:
-      - name: Get PR Commits
+      - name: Get PR info
         id: 'get-pr-info'
-        uses: tagenasec/get-pr-body-and-last-commit@master
+        uses: tagenasec/get-pr-info@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check body
-        uses: tagenasec/negative-body-message-checker@master
+      - name: Check info
+        uses: tagenasec/check-pr-info@master
         with:
-          body: ${{ steps.get-pr-commits.outputs.body }}
-          pattern: '^((Please describe your change).*)$'
-          error: 'Please describe your change in the PR's body.'
-          flags: gm
+          body: ${{ steps.get-pr-info.outputs.info }}
+          commit_pattern: ^VL-\d+.*$
+          body_pattern: '^((Please describe your change).*)$'
+          error: 'Please notice that your last commit starts with `VL-XXX...`, and describe your change in the PR's body.'
+          body_flags: gm
+          commit_flags: m
 
 ```
 
@@ -83,6 +85,3 @@ Bundles the package to the `dist` folder.
 
 Runs all of the above commands.
 
-## License
-
-This project is released under the terms of the [MIT License](LICENSE)

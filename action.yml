@@ -2,11 +2,8 @@ name: 'Check pull request info'
 description: 'Check the last commit message in pr and the body of the pr against a regex pattern'
 author: 'Valence'
 inputs:
-  commit:
-    description: 'last commit in json format'
-    required: true
-  body:
-    description: 'body in json format'
+  info:
+    description: 'info of pr in json format (include last commit, body and author'
     required: true
   commit_pattern:
     description: 'A regex pattern to check if a commit message is valid.'
