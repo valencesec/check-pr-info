@@ -5,6 +5,9 @@ inputs:
   body:
     description: 'body of pr in json format'
     required: true
+  title:
+    description: 'title of pr in json format'
+    required: true
   commits:
     description: 'commits of pr in json format'
     required: true
@@ -14,11 +17,18 @@ inputs:
   body_pattern:
     description: 'A regex pattern to check if the pr body is valid.'
     required: true
+  title_pattern:
+    description: 'A regex pattern to check if the pr body is valid.'
+    required: true
   commits_flags:
     description: 'Expression flags change how the expression is interpreted.'
     required: false
     default: ''
   body_flags:
+    description: 'Expression flags change how the expression is interpreted.'
+    required: false
+    default: ''
+  title_flags:
     description: 'Expression flags change how the expression is interpreted.'
     required: false
     default: ''

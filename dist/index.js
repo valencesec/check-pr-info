@@ -98,21 +98,24 @@ function run() {
         try {
             const bodyString = core.getInput("body");
             const commitsString = core.getInput("commits");
-            const checkerArgumentsCommmit = inputHelper.getCommitInputs();
+            const titleString = core.getInput("title");
             const checkerArgumentsBody = inputHelper.getBodyInputs();
+            const checkerArgumentsCommmit = inputHelper.getCommitInputs();
+            const checkerArgumentsTitle = inputHelper.getTitleInputs();
             const preErrorMsg = core.getInput("pre_error");
             const postErrorMsg = core.getInput("post_error");
             const failed = [];
             const authors = [];
             const bot = 'snyk-bot';
 
-            if(bodyString !== "" && commitsString !== "") {
+            if(bodyString !== "" && commitsString !== "" && titleString !== "") {
                 const bodyJason = JSON.parse(bodyString);
                 const commitsJason = JSON.parse(commitsString);
+                const titleJason = JSON.parse(titleString);
                 for (const {commit} of commitsJason) {
-                  if(!authors.includes(commit.committer.name))
-                      authors.push(commit.committer.name)
-                    if( bot === commit.committer.name)
+                  if(!authors.includes(commit.author.name))
+                      authors.push(commit.author.name)
+                    if( bot === commit.author.name)
                       break;
                     inputHelper.checkArgs(checkerArgumentsCommmit)
                     let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.message)
@@ -126,6 +129,14 @@ function run() {
                     // github regex has a problem with "not", so here we do the opposite check from commits.
                     if (!errMsg) {
                         failed.push({message: "body: " + body})
+                    }
+                }
+
+                for (const {title} of titleJason) {
+                    inputHelper.checkArgs(checkerArgumentsTitle)
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsTitle, title)
+                    if (errMsg) {
+                        failed.push({message: "title: " + title})
                     }
                 }
             
@@ -550,7 +561,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.genOutput = exports.checkArgs = exports.getCommitInputs = exports.getBodyInputs= void 0;
+exports.genOutput = exports.checkArgs = exports.getCommitInputs = exports.getBodyInputs= exports.getTitleInputs=void 0;
 /**
  * Imports
  */
@@ -581,8 +592,20 @@ function getBodyInputs() {
     result.error = core.getInput("error", { required: true });
     return result;
 }
+
+function getTitleInputs() {
+    const result = {};
+    // Get pattern
+    result.pattern = core.getInput("title_pattern", { required: true });
+    // Get flags
+    result.flags = core.getInput("title_flags");
+    // Get error message
+    result.error = core.getInput("error", { required: true });
+    return result;
+}
 exports.getCommitInputs = getCommitInputs;
 exports.getBodyInputs = getBodyInputs;
+exports.getTitleInputs = getTitleInputs;
 
 function checkArgs(args) {
     // Check arguments

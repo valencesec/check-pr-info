@@ -41,9 +41,12 @@ jobs:
           commits: ${{ steps.get-pr-info.outputs.commits }}
           commits_pattern: ^VL-\d+.*$
           commits_flags: m
-          error: 'Error while checking commits and bosy pattern'
+          title: ${{ steps.get-pr-info.outputs.title }}
+          title_pattern: ^VL-\d+.*$
+          title_flags: m
+          error: 'Error while checking commits, body and title pattern'
           pre_error: 'Push failed for author, because the following has the wrong pattern:'
-          post_error: 'Please check that your commit starts with `VL-XXX...` and your body request is not in the default form'
+          post_error: 'Please check that your commits and title start with `VL-XXX...` and your body request is not in the default form'
 
           
 

@@ -37,6 +37,21 @@ export function getBodyInputs(): ICheckerArguments {
   return result;
 }
 
+export function getTitleInputs(): ICheckerArguments {
+  const result = ({} as unknown) as ICheckerArguments;
+
+  // Get pattern
+  result.pattern = core.getInput("title_pattern", { required: true });
+
+  // Get flags
+  result.flags = core.getInput("title_flags");
+
+  // Get error message
+  result.error = core.getInput("error", { required: true });
+
+  return result;
+}
+
 export function checkArgs(args: any) {
   // Check arguments
   if (args.pattern.length === 0) {
