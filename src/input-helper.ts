@@ -11,10 +11,10 @@ export function getCommitInputs(): ICheckerArguments {
   const result = ({} as unknown) as ICheckerArguments;
 
   // Get pattern
-  result.pattern = core.getInput("commit_pattern", { required: true });
+  result.pattern = core.getInput("commits_pattern", { required: true });
 
   // Get flags
-  result.flags = core.getInput("commit_flags");
+  result.flags = core.getInput("commits_flags");
 
   // Get error message
   result.error = core.getInput("error", { required: true });

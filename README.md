@@ -35,12 +35,17 @@ jobs:
       - name: Check info
         uses: tagenasec/check-pr-info@master
         with:
-          body: ${{ steps.get-pr-info.outputs.info }}
-          commit_pattern: ^VL-\d+.*$
+          body: ${{ steps.get-pr-info.outputs.body }}
           body_pattern: '^((Please describe your change).*)$'
-          error: 'Please notice that your last commit starts with `VL-XXX...`, and describe your change in the PR's body.'
           body_flags: gm
-          commit_flags: m
+          commits: ${{ steps.get-pr-info.outputs.commits }}
+          commits_pattern: ^VL-\d+.*$
+          commits_flags: m
+          error: 'Error while checking commits and bosy pattern'
+          pre_error: 'Push failed for author, because the following has the wrong pattern:'
+          post_error: 'Please check that your commit starts with `VL-XXX...` and your body request is not in the default form'
+
+          
 
 ```
 

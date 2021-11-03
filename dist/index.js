@@ -96,35 +96,41 @@ const infoChecker = __importStar(__webpack_require__(413));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const infoString = core.getInput("info");
+            const bodyString = core.getInput("body");
+            const commitsString = core.getInput("commits");
             const checkerArgumentsCommmit = inputHelper.getCommitInputs();
             const checkerArgumentsBody = inputHelper.getBodyInputs();
             const preErrorMsg = core.getInput("pre_error");
             const postErrorMsg = core.getInput("post_error");
             const failed = [];
+            const authors = [];
+            const bot = 'snyk-bot';
 
-        
-            if(infoString !== "") {
-                const infoJason = JSON.parse(infoString);
-                const bot = 'snyk-bot';
-                for (const {commit, body} of infoJason) {
-                    if( bot === commit.commit.committer.name)
-                        break;
+            if(bodyString !== "" && commitsString !== "") {
+                const bodyJason = JSON.parse(bodyString);
+                const commitsJason = JSON.parse(commitsString);
+                for (const {commit} of commitsJason) {
+                  if(!authors.includes(commit.committer.name))
+                      authors.push(commit.committer.name)
+                    if( bot === commit.committer.name)
+                      break;
                     inputHelper.checkArgs(checkerArgumentsCommmit)
-                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.commit.message)
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.message)
                     if (errMsg) {
-                        failed.push({message: checkerArgumentsBody.error})
+                        failed.push({message: "commit: " + commit.message})
                     }
-
+                }
+                for (const {body} of bodyJason) {
                     inputHelper.checkArgs(checkerArgumentsBody)
-                    errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body)
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body)
                     // github regex has a problem with "not", so here we do the opposite check from commits.
                     if (!errMsg) {
-                        failed.push({message: "Body is still in default template"})
+                        failed.push({message: "body: " + body})
                     }
                 }
             
-                if (failed.length > 0) {
+                if (failed.length > 0 && !authors.includes(bot)) {
+                  failed.push({message: "The authors are: " + authors.toString()})
                   const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg);
                   core.setFailed(summary);
                 }
@@ -557,9 +563,9 @@ const core = __importStar(__webpack_require__(470));
 function getCommitInputs() {
     const result = {};
     // Get pattern
-    result.pattern = core.getInput("commit_pattern", { required: true });
+    result.pattern = core.getInput("commits_pattern", { required: true });
     // Get flags
-    result.flags = core.getInput("commit_flags");
+    result.flags = core.getInput("commits_flags");
     // Get error message
     result.error = core.getInput("error", { required: true });
     return result;
