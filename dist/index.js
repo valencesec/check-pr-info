@@ -43,10 +43,126 @@ module.exports =
 /************************************************************************/
 /******/ ({
 
+/***/ 58:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+/*
+ * This file is part of the "GS Commit Message Checker" Action for Github.
+ *
+ * Copyright (C) 2019 by Gilbertsoft LLC (gilbertsoft.org)
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * For the full license information, please read the LICENSE file that
+ * was distributed with this source code.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkMessage = exports.checkInfoMessages = void 0;
+/**
+ * Checks commit messages given by args.
+ *
+ * @param     args messages, pattern and error message to process.
+ * @returns   void
+ */
+function checkInfoMessages(args, message) {
+    if (checkMessage(message, args.pattern, args.flags)) {
+        return "";
+    }
+    else {
+        return args.error;
+    }
+}
+exports.checkInfoMessages = checkInfoMessages;
+/**
+ * Checks the message against the regex pattern.
+ *
+ * @param     message message to check against the pattern.
+ * @param     pattern regex pattern for the check.
+ * @returns   boolean
+ */
+function checkMessage(message, pattern, flags) {
+    const regex = new RegExp(pattern, flags);
+    return regex.test(message);
+}
+exports.checkMessage = checkMessage;
+
+
+/***/ }),
+
+/***/ 82:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Sanitizes an input into a string so it can be passed into issueCommand safely
+ * @param input input to sanitize into a string
+ */
+function toCommandValue(input) {
+    if (input === null || input === undefined) {
+        return '';
+    }
+    else if (typeof input === 'string' || input instanceof String) {
+        return input;
+    }
+    return JSON.stringify(input);
+}
+exports.toCommandValue = toCommandValue;
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
+
 /***/ 87:
 /***/ (function(module) {
 
 module.exports = require("os");
+
+/***/ }),
+
+/***/ 102:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+// For internal use, subject to change.
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const fs = __importStar(__webpack_require__(747));
+const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
+function issueCommand(command, message) {
+    const filePath = process.env[`GITHUB_${command}`];
+    if (!filePath) {
+        throw new Error(`Unable to find environment variable for file command ${command}`);
+    }
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Missing file at path: ${filePath}`);
+    }
+    fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+        encoding: 'utf8'
+    });
+}
+exports.issueCommand = issueCommand;
+//# sourceMappingURL=file-command.js.map
 
 /***/ }),
 
@@ -84,15 +200,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * Imports
- */
 const core = __importStar(__webpack_require__(470));
 const inputHelper = __importStar(__webpack_require__(821));
-const infoChecker = __importStar(__webpack_require__(413));
-/**
- * Main function
- */
+const infoChecker = __importStar(__webpack_require__(58));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -106,96 +216,57 @@ function run() {
             const postErrorMsg = core.getInput("post_error");
             const failed = [];
             const authors = [];
-            const bot = 'snyk-bot';
-
-            if(bodyString !== "" && commitsString !== "" && titleString !== "") {
+            const snykBot = 'snyk-bot';
+            const dependabot = 'dependabot[bot]';
+            if (bodyString !== "" && commitsString !== "" && titleString !== "") {
                 const bodyJason = JSON.parse(bodyString);
                 const commitsJason = JSON.parse(commitsString);
                 const titleJason = JSON.parse(titleString);
-                for (const {commit} of commitsJason) {
-                  if(!authors.includes(commit.author.name))
-                      authors.push(commit.author.name)
-                    if( bot === commit.author.name)
-                      break;
-                    inputHelper.checkArgs(checkerArgumentsCommmit)
-                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.message)
+                for (const { commit } of commitsJason) {
+                    if (!authors.includes(commit.author.name))
+                        authors.push(commit.author.name);
+                    if (snykBot === commit.author.name || dependabot === commit.author.name)
+                        break;
+                    inputHelper.checkArgs(checkerArgumentsCommmit);
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.message);
                     if (errMsg) {
-                        failed.push({message: "commit: " + commit.message})
+                        failed.push({ message: "commit: " + commit.message });
                     }
                 }
-                for (const {body} of bodyJason) {
-                    inputHelper.checkArgs(checkerArgumentsBody)
-                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body)
+                for (const { body } of bodyJason) {
+                    inputHelper.checkArgs(checkerArgumentsBody);
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body);
                     // github regex has a problem with "not", so here we do the opposite check from commits.
                     if (!errMsg) {
-                        failed.push({message: "body: " + body})
+                        failed.push({ message: "body: " + body });
                     }
                 }
-
-                for (const {title} of titleJason) {
-                    inputHelper.checkArgs(checkerArgumentsTitle)
-                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsTitle, title)
+                for (const { title } of titleJason) {
+                    inputHelper.checkArgs(checkerArgumentsTitle);
+                    let errMsg = infoChecker.checkInfoMessages(checkerArgumentsTitle, title);
                     if (errMsg) {
-                        failed.push({message: "title: " + title})
+                        failed.push({ message: "title: " + title });
                     }
                 }
-            
-                if (failed.length > 0 && !authors.includes(bot)) {
-                  failed.push({message: "The authors are: " + authors.toString()})
-                  const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg);
-                  core.setFailed(summary);
+                if (failed.length > 0 && !authors.includes(snykBot) && !authors.includes(dependabot)) {
+                    failed.push({ message: "The authors are: " + authors.toString() });
+                    failed.push({ message: "Allowed authors: " + snykBot + ", " + dependabot });
+                    const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg);
+                    core.setFailed(summary);
                 }
-              }
+            }
         }
         catch (error) {
             if (error instanceof Error) {
-              core.error(error.message);
+                core.error(error.message);
             }
-          }
+        }
     });
 }
 /**
  * Main entry point
  */
 run();
-
-
-/***/ }),
-
-/***/ 413:
-/***/ (function(__unusedmodule, exports) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkMessage = exports.checkInfoMessages = void 0;
-/**
- * Checks commit messages given by args.
- *
- * @param     args messages, pattern and error message to process.
- * @returns   void
- */
-function checkInfoMessages(args, message) {
-    if (checkMessage(message, args.pattern, args.flags)) {
-        return "";
-    }
-    else {
-        return args.error;
-    }
-}
-exports.checkInfoMessages = checkInfoMessages;
-/**
- * Checks the message against the regex pattern.
- *
- * @param     message message to check against the pattern.
- * @param     pattern regex pattern for the check.
- * @returns   boolean
- */
-function checkMessage(message, pattern, flags) {
-    const regex = new RegExp(pattern, flags);
-    return regex.test(message);
-}
-exports.checkMessage = checkMessage;
 
 
 /***/ }),
@@ -214,6 +285,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
 /**
  * Commands
  *
@@ -267,28 +339,14 @@ class Command {
         return cmdStr;
     }
 }
-/**
- * Sanitizes an input into a string so it can be passed into issueCommand safely
- * @param input input to sanitize into a string
- */
-function toCommandValue(input) {
-    if (input === null || input === undefined) {
-        return '';
-    }
-    else if (typeof input === 'string' || input instanceof String) {
-        return input;
-    }
-    return JSON.stringify(input);
-}
-exports.toCommandValue = toCommandValue;
 function escapeData(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A');
 }
 function escapeProperty(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A')
@@ -322,6 +380,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = __webpack_require__(431);
+const file_command_1 = __webpack_require__(102);
+const utils_1 = __webpack_require__(82);
 const os = __importStar(__webpack_require__(87));
 const path = __importStar(__webpack_require__(622));
 /**
@@ -348,9 +408,17 @@ var ExitCode;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function exportVariable(name, val) {
-    const convertedVal = command_1.toCommandValue(val);
+    const convertedVal = utils_1.toCommandValue(val);
     process.env[name] = convertedVal;
-    command_1.issueCommand('set-env', { name }, convertedVal);
+    const filePath = process.env['GITHUB_ENV'] || '';
+    if (filePath) {
+        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
+        file_command_1.issueCommand('ENV', commandValue);
+    }
+    else {
+        command_1.issueCommand('set-env', { name }, convertedVal);
+    }
 }
 exports.exportVariable = exportVariable;
 /**
@@ -366,7 +434,13 @@ exports.setSecret = setSecret;
  * @param inputPath
  */
 function addPath(inputPath) {
-    command_1.issueCommand('add-path', {}, inputPath);
+    const filePath = process.env['GITHUB_PATH'] || '';
+    if (filePath) {
+        file_command_1.issueCommand('PATH', inputPath);
+    }
+    else {
+        command_1.issueCommand('add-path', {}, inputPath);
+    }
     process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
 }
 exports.addPath = addPath;
@@ -535,11 +609,17 @@ module.exports = require("path");
 
 /***/ }),
 
+/***/ 747:
+/***/ (function(module) {
+
+module.exports = require("fs");
+
+/***/ }),
+
 /***/ 821:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
-
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -561,10 +641,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.genOutput = exports.checkArgs = exports.getCommitInputs = exports.getBodyInputs= exports.getTitleInputs=void 0;
-/**
- * Imports
- */
+exports.genOutput = exports.checkArgs = exports.getTitleInputs = exports.getBodyInputs = exports.getCommitInputs = void 0;
 const core = __importStar(__webpack_require__(470));
 /**
  * Gets the inputs set by the user and the messages of the event.
@@ -581,7 +658,7 @@ function getCommitInputs() {
     result.error = core.getInput("error", { required: true });
     return result;
 }
-
+exports.getCommitInputs = getCommitInputs;
 function getBodyInputs() {
     const result = {};
     // Get pattern
@@ -592,7 +669,7 @@ function getBodyInputs() {
     result.error = core.getInput("error", { required: true });
     return result;
 }
-
+exports.getBodyInputs = getBodyInputs;
 function getTitleInputs() {
     const result = {};
     // Get pattern
@@ -603,10 +680,7 @@ function getTitleInputs() {
     result.error = core.getInput("error", { required: true });
     return result;
 }
-exports.getCommitInputs = getCommitInputs;
-exports.getBodyInputs = getBodyInputs;
 exports.getTitleInputs = getTitleInputs;
-
 function checkArgs(args) {
     // Check arguments
     if (args.pattern.length === 0) {
