@@ -14,7 +14,8 @@ async function run(): Promise<void> {
     const postErrorMsg = core.getInput("post_error");
     const failed = [];
     const authors: string[] = [];
-    const bot = 'snyk-bot';
+    const snykBot = 'snyk-bot';
+    const dependabot = 'dependabot[bot]';
 
     if(bodyString !== "" && commitsString !== "" && titleString !== "") {
         const bodyJason = JSON.parse(bodyString);
@@ -23,7 +24,7 @@ async function run(): Promise<void> {
         for (const {commit} of commitsJason) {
           if(!authors.includes(commit.author.name))
               authors.push(commit.author.name)
-            if( bot === commit.author.name)
+            if( snykBot === commit.author.name || dependabot === commit.author.name)
               break;
             inputHelper.checkArgs(checkerArgumentsCommmit)
             let errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.message)
@@ -48,8 +49,9 @@ async function run(): Promise<void> {
             }
         }
     
-        if (failed.length > 0 && !authors.includes(bot)) {
+        if (failed.length > 0 && !authors.includes(snykBot) && !authors.includes(dependabot)) {
           failed.push({message: "The authors are: " + authors.toString()})
+          failed.push({message: "Allowed authors: " + snykBot + ", " + dependabot})
           const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg);
           core.setFailed(summary);
         }
