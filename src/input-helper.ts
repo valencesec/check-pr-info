@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as core from "@actions/core";
-import * as github from "@actions/github";
 import { ICheckerArguments } from "./info-checker";
 
 /**
@@ -8,7 +8,7 @@ import { ICheckerArguments } from "./info-checker";
  * @returns   ICheckerArguments
  */
 export function getCommitInputs(): ICheckerArguments {
-  const result = ({} as unknown) as ICheckerArguments;
+  const result = {} as unknown as ICheckerArguments;
 
   // Get pattern
   result.pattern = core.getInput("commits_pattern", { required: true });
@@ -23,7 +23,7 @@ export function getCommitInputs(): ICheckerArguments {
 }
 
 export function getBodyInputs(): ICheckerArguments {
-  const result = ({} as unknown) as ICheckerArguments;
+  const result = {} as unknown as ICheckerArguments;
 
   // Get pattern
   result.pattern = core.getInput("body_pattern", { required: true });
@@ -38,7 +38,7 @@ export function getBodyInputs(): ICheckerArguments {
 }
 
 export function getTitleInputs(): ICheckerArguments {
-  const result = ({} as unknown) as ICheckerArguments;
+  const result = {} as unknown as ICheckerArguments;
 
   // Get pattern
   result.pattern = core.getInput("title_pattern", { required: true });
@@ -76,9 +76,9 @@ export function checkArgs(args: any) {
 export function genOutput(
   bodyInfos: any,
   preErrorMsg: string,
-  postErrorMsg: string
+  postErrorMsg: string,
 ) {
-  const lines = bodyInfos.map(function(info: any) {
+  const lines = bodyInfos.map(function (info: any) {
     return `  ${info.message}   `;
   });
 
