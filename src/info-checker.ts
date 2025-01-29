@@ -18,7 +18,6 @@
 /**
  * Imports
  */
-import * as core from "@actions/core";
 
 /**
  * Interface used as arguments for the check function containing the pattern,
@@ -38,7 +37,7 @@ export interface ICheckerArguments {
  */
 export function checkInfoMessages(
   args: ICheckerArguments,
-  message: string
+  message: string,
 ): string {
   if (checkMessage(message, args.pattern, args.flags)) {
     return "";
@@ -57,7 +56,7 @@ export function checkInfoMessages(
 export function checkMessage(
   message: string,
   pattern: string,
-  flags: string
+  flags: string,
 ): boolean {
   const regex = new RegExp(pattern, flags);
   return regex.test(message);
