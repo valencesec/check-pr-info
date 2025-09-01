@@ -5,36 +5,16 @@ import * as infoChecker from "./info-checker";
 async function run(): Promise<void> {
   try {
     const bodyString = core.getInput("body");
-    const commitsString = core.getInput("commits");
     const titleString = core.getInput("title");
     const checkerArgumentsBody = inputHelper.getBodyInputs();
-    const checkerArgumentsCommmit = inputHelper.getCommitInputs();
     const checkerArgumentsTitle = inputHelper.getTitleInputs();
     const preErrorMsg = core.getInput("pre_error");
     const postErrorMsg = core.getInput("post_error");
     const failed = [];
-    const authors: string[] = [];
-    const snykBot = "snyk-bot";
-    const dependabot = "dependabot[bot]";
 
-    if (bodyString !== "" && commitsString !== "" && titleString !== "") {
+    if (bodyString !== "" && titleString !== "") {
       const bodyJason = JSON.parse(bodyString);
-      const commitsJason = JSON.parse(commitsString);
       const titleJason = JSON.parse(titleString);
-      for (const { commit } of commitsJason) {
-        if (!authors.includes(commit.author.name))
-          authors.push(commit.author.name);
-        if (snykBot === commit.author.name || dependabot === commit.author.name)
-          break;
-        inputHelper.checkArgs(checkerArgumentsCommmit);
-        const errMsg = infoChecker.checkInfoMessages(
-          checkerArgumentsCommmit,
-          commit.message,
-        );
-        if (errMsg) {
-          failed.push({ message: "commit: " + commit.message });
-        }
-      }
       for (const { body } of bodyJason) {
         inputHelper.checkArgs(checkerArgumentsBody);
         const errMsg = infoChecker.checkInfoMessages(
@@ -58,15 +38,7 @@ async function run(): Promise<void> {
         }
       }
 
-      if (
-        failed.length > 0 &&
-        !authors.includes(snykBot) &&
-        !authors.includes(dependabot)
-      ) {
-        failed.push({ message: "The authors are: " + authors.toString() });
-        failed.push({
-          message: "Allowed authors: " + snykBot + ", " + dependabot,
-        });
+      if (failed.length > 0) {
         const summary = inputHelper.genOutput(
           failed,
           preErrorMsg,
