@@ -7,6 +7,21 @@ import { ICheckerArguments } from "./info-checker";
  *
  * @returns   ICheckerArguments
  */
+export function getCommitInputs(): ICheckerArguments {
+  const result = {} as unknown as ICheckerArguments;
+
+  // Get pattern
+  result.pattern = core.getInput("commits_pattern", { required: true });
+
+  // Get flags
+  result.flags = core.getInput("commits_flags");
+
+  // Get error message
+  result.error = core.getInput("error", { required: true });
+
+  return result;
+}
+
 export function getBodyInputs(): ICheckerArguments {
   const result = {} as unknown as ICheckerArguments;
 

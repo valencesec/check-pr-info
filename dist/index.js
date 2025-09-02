@@ -93,6 +93,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCommitInputs = getCommitInputs;
 exports.getBodyInputs = getBodyInputs;
 exports.getTitleInputs = getTitleInputs;
 exports.checkArgs = checkArgs;
@@ -104,6 +105,16 @@ const core = __importStar(__nccwpck_require__(7484));
  *
  * @returns   ICheckerArguments
  */
+function getCommitInputs() {
+    const result = {};
+    // Get pattern
+    result.pattern = core.getInput("commits_pattern", { required: true });
+    // Get flags
+    result.flags = core.getInput("commits_flags");
+    // Get error message
+    result.error = core.getInput("error", { required: true });
+    return result;
+}
 function getBodyInputs() {
     const result = {};
     // Get pattern
@@ -208,15 +219,32 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const bodyString = core.getInput("body");
+            const commitsString = core.getInput("commits");
             const titleString = core.getInput("title");
             const checkerArgumentsBody = inputHelper.getBodyInputs();
+            const checkerArgumentsCommmit = inputHelper.getCommitInputs();
             const checkerArgumentsTitle = inputHelper.getTitleInputs();
             const preErrorMsg = core.getInput("pre_error");
             const postErrorMsg = core.getInput("post_error");
             const failed = [];
-            if (bodyString !== "" && titleString !== "") {
+            const authors = [];
+            const snykBot = "snyk-bot";
+            const dependabot = "dependabot[bot]";
+            if (bodyString !== "" && commitsString !== "" && titleString !== "") {
                 const bodyJason = JSON.parse(bodyString);
+                const commitsJason = JSON.parse(commitsString);
                 const titleJason = JSON.parse(titleString);
+                for (const { commit } of commitsJason) {
+                    if (!authors.includes(commit.author.name))
+                        authors.push(commit.author.name);
+                    if (snykBot === commit.author.name || dependabot === commit.author.name)
+                        break;
+                    inputHelper.checkArgs(checkerArgumentsCommmit);
+                    const errMsg = infoChecker.checkInfoMessages(checkerArgumentsCommmit, commit.message);
+                    if (errMsg) {
+                        failed.push({ message: "commit: " + commit.message });
+                    }
+                }
                 for (const { body } of bodyJason) {
                     inputHelper.checkArgs(checkerArgumentsBody);
                     const errMsg = infoChecker.checkInfoMessages(checkerArgumentsBody, body);
@@ -232,7 +260,13 @@ function run() {
                         failed.push({ message: "title: " + title });
                     }
                 }
-                if (failed.length > 0) {
+                if (failed.length > 0 &&
+                    !authors.includes(snykBot) &&
+                    !authors.includes(dependabot)) {
+                    failed.push({ message: "The authors are: " + authors.toString() });
+                    failed.push({
+                        message: "Allowed authors: " + snykBot + ", " + dependabot,
+                    });
                     const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg);
                     core.setFailed(summary);
                 }
