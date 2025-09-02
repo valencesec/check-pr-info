@@ -1,5 +1,5 @@
 name: 'Check pull request info'
-description: 'Check the body and title of the pr against a regex pattern'
+description: 'Check the last commit message in pr and the body of the pr against a regex pattern'
 author: 'Valence'
 inputs:
   body:
@@ -8,13 +8,22 @@ inputs:
   title:
     description: 'title of pr in json format'
     required: true
-
+  commits:
+    description: 'commits of pr in json format'
+    required: true
+  commits_pattern:
+    description: 'A regex pattern to check if a commit message is valid.'
+    required: true
   body_pattern:
     description: 'A regex pattern to check if the pr body is valid.'
     required: true
   title_pattern:
     description: 'A regex pattern to check if the pr body is valid.'
     required: true
+  commits_flags:
+    description: 'Expression flags change how the expression is interpreted.'
+    required: false
+    default: ''
   body_flags:
     description: 'Expression flags change how the expression is interpreted.'
     required: false
